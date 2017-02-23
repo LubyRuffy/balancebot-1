@@ -5,7 +5,7 @@ import re
 import threading
 import time
 
-from py import util
+import util
 
 ctrl = util.PIDController(1, 0, 0, lambda: 1, lambda x: print(x))
 
