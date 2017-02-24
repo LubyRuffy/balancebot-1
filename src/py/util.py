@@ -61,3 +61,6 @@ class ElapsedTime:
 
 def rangemap(x, a1, b1, a2, b2):
     return (b2 - a2) * (x - a1) / (b1 - a1) + a2
+    
+def cap(x, a, b):
+    return max(min(x, b), a)
