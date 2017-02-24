@@ -11,6 +11,8 @@ Servo right;
 void setup() {
   left.attach(LEFT);
   right.attach(RIGHT);
+  left.write(90);
+  right.write(90);
   Wire.begin(I2C_ADDR);
 }
 
