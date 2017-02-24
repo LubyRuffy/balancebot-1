@@ -8,36 +8,49 @@
 Servo left;
 Servo right;
 
+volatile int lPos;
+volatile int rPos;
+
 void setup() {
+  pinMode(LEFT, OUTPUT);
+  pinMode(RIGHT, OUTPUT);
   left.attach(LEFT);
   right.attach(RIGHT);
-  left.write(90);
-  right.write(90);
+  
+  lPos = 90;
+  rPos = 90;
+  
   Wire.begin(I2C_ADDR);
+  Wire.onReceive(recieveEvent);
+
+  Serial.begin(115200);
+  Serial.println("asd");
 }
 
 void loop() {
-  
-  if (Wire.available()) {
-    
-    char first;
-    String pos_str;
-    first = Wire.read();
-    while (Wire.available() > 0) {
-      pos_str += (char) Wire.read();
-    }
-    int pos = pos_str.toInt();
-    
-    switch (first) {
-      case 'l':
-        left.write(pos);
-        break;
-      case 'r':
-        right.write(pos);
-        break;
-    }
-    
+  left.write(lPos);
+  right.write(rPos);
+}
+
+void recieveEvent(int bytes) {
+  char first = Wire.read();
+  uint8_t pos = Wire.read();
+  clearBuff();
+  Serial.println(first);
+  Serial.println(pos);
+  switch (first) {
+    case 'l':
+      lPos = pos;
+      break;
+    case 'r':
+      rPos = pos;
+      break;
   }
-  
+}
+
+void clearBuff() {
+  while (Wire.available() > 0) {
+    Wire.read();
+  }
 }
 
