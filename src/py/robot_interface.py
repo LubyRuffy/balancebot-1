@@ -25,4 +25,4 @@ class CRServoI2C(Motor):
             output = int(util.rangemap(power, -1, 0, self.min_power, self.neutral))
         else:
             output = int(util.rangemap(power, 0, 1, self.neutral, self.max_power))
-        bus.write_byte_data(0x73, self.first_byte, output)
+        self.i2c.write_byte_data(0x73, self.first_byte, output)
