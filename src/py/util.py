@@ -57,3 +57,7 @@ class ElapsedTime:
 
     def get_time(self):
         return time.clock() - self._base
+
+
+def rangemap(x, a1, b1, a2, b2):
+    return (b2 - a2) * (x - a1) / (b1 - a1) + a2
