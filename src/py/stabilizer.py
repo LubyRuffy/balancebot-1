@@ -15,9 +15,10 @@ import util
 
 class InputThread(threading.Thread):
 
-    def __init__(self, ctrl):
+    def __init__(self, ctrl, gyro):
         super().__init__()
         self.ctrl = ctrl
+        self.gyro = gyro
 
     def run(self):
         while True:
@@ -35,6 +36,9 @@ class InputThread(threading.Thread):
                         self.ctrl.d = n
                     elif a == 't':
                         self.ctrl.set_target(n)
+                    elif a == 'c':
+                        self.gyro.calibrate()
+                        self.gyro.angle = rotation(self.gyro.mpu.get_accel_data())
                     print('set %s to %s' % (a, n))
             except AttributeError:
                 pass
@@ -49,17 +53,19 @@ def rotation(data):
 def main():
     i2c_bus = SMBus(1)
     mpu = mpu6050(0x68)
+    mpu.set_gyro_range(mpu6050.GYRO_RANGE_1000DEG)
 
     left_motor = robot.CRServoI2C(i2c_bus, 0x73, ord('l'), neutral=85, suppress_errors=True)
     right_motor = robot.CRServoI2C(i2c_bus, 0x73, ord('r'), neutral=90, suppress_errors=True)
     left_motor.set_power(1)
     output = 0
     
-    feedback = lambda: rotation(mpu.get_accel_data())
-    
-    ctrl = util.PIDController(0, 0, 0, feedback, lambda x: output_to_motors(x, left_motor, right_motor))
+    gyro = util.GyroIntegrator(mpu, 'y')
+    feedback = lambda: math.cos(rotation(mpu.get_accel_data()))
+     
+    ctrl = util.PIDController(0, 0, 0, feedback, lambda x: output_to_motors(x, left_motor, right_motor), deadzone=3)
 
-    InputThread(ctrl).start()
+    InputThread(ctrl, gyro).start()
 
     timer = util.ElapsedTime()
 
@@ -69,7 +75,8 @@ def main():
         dt = timer.get_time()
 
         ctrl.update(dt)
-        print(feedback())
+        gyro.update(dt)
+        print(dt, feedback())
         
         #stdscr.refresh()
         timer.reset()
