@@ -1,49 +1,55 @@
 """
 Keeps the robot upright at a certain angle
 """
+from curses import wrapper
 import re
 import threading
 import time
 
 import util
 
-ctrl = util.PIDController(1, 0, 0, lambda: 1, lambda x: print(x))
-
 
 class InputThread(threading.Thread):
 
+    def __init__(self, ctrl):
+        self.ctrl = ctrl
+
     def run(self):
         while True:
-            match = re.search(r'([a-z])(\d*\.?\d*)', input())
+            match = re.search(r'([a-z])(-?\d*\.?\d*)', input())
             a = match.group(1)
             n = match.group(2)
             if a and n:
                 n = float(n)
                 if a == 'p':
-                    ctrl.p = n
+                    self.ctrl.p = n
                 elif a == 'i':
-                    ctrl.i = n
+                    self.ctrl.i = n
                 elif a == 'd':
-                    ctrl.d = n
+                    self.ctrl.d = n
                 elif a == 't':
-                    ctrl.set_target(n)
+                    self.ctrl.set_target(n)
 
 
-class Updater(threading.Thread):
+def main(stdscr):
+    ctrl = util.PIDController(1, 0, 0, lambda: 1, lambda x: print(x))
 
-    def __init__(self):
-        super(Updater, self).__init__()
+    InputThread(ctrl).start()
 
-    def run(self):
-        timer = util.ElapsedTime()
+    timer = util.ElapsedTime()
 
-        while True:
-            dt = timer.get_time()
+    while True:
+        stdscr.clear()
 
-            ctrl.update(dt)
+        dt = timer.get_time()
 
-            timer.reset()
-            time.sleep(0.02)
+        ctrl.update(dt)
 
-InputThread().start()
-Updater().start()
+        timer.reset()
+        time.sleep(0.02)
+
+        stdscr.refresh()
+
+
+if __name__ == '__main__':
+    wrapper(main)
