@@ -1,3 +1,4 @@
+import functools
 import time
 
 
@@ -79,6 +80,24 @@ class GyroIntegrator:
         
     def raw_data(self):
         return self.mpu.get_gyro_data()[self.axis]
+
+
+class Buffer:
+    
+    def __init__(self, size):
+        self.size = size
+        self.data = [0 for _ in range(0, size)]
+        self._index = 0
+    
+    def push(self, obj):
+        self.data[self._index] = obj
+        self._index = (self._index + 1) % self.size
+    
+    def sum(self):
+        return functools.reduce((lambda x, y: x + y), self.data)
+    
+    def avg(self):
+        return self.sum() / len(self.data)
 
 
 class ElapsedTime:

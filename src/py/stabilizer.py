@@ -48,7 +48,7 @@ def output_to_motors(power, left, right):
     right.set_power(-power)
 
 def rotation(data):
-    return math.degrees(math.atan2(data['z'], data['x']))
+    return math.atan2(data['z'], data['x'])
 
 def main():
     i2c_bus = SMBus(1)
@@ -60,10 +60,11 @@ def main():
     left_motor.set_power(1)
     output = 0
     
-    gyro = util.GyroIntegrator(mpu, 'y')
-    feedback = lambda: math.cos(rotation(mpu.get_accel_data()))
-     
-    ctrl = util.PIDController(0, 0, 0, feedback, lambda x: output_to_motors(x, left_motor, right_motor), deadzone=3)
+    buff = util.Buffer(10)
+    feedback = lambda: -math.cos(buff.avg())
+    
+    gyro = util.GyroIntegrator(mpu, 'y') 
+    ctrl = util.PIDController(0, 0, 0, feedback, lambda x: output_to_motors(x, left_motor, right_motor))
 
     InputThread(ctrl, gyro).start()
 
@@ -73,7 +74,8 @@ def main():
         #stdscr.clear()
 
         dt = timer.get_time()
-
+        
+        buff.push(rotation(mpu.get_accel_data()))
         ctrl.update(dt)
         gyro.update(dt)
         print(dt, feedback())
